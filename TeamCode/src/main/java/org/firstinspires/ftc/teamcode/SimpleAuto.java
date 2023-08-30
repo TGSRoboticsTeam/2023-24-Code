@@ -62,8 +62,10 @@ public class SimpleAuto extends LinearOpMode
     // Wheel constants
     public double ticksPerRotation = 537.6; // For AndyMark NeveRest 20
     public double rpm = 340;
-    public double diameter = 10; //cm
+    public double diameter = 7.5; //cm
     public double circumference = Math.PI * diameter;
+
+    public double wheelRatio = 1;
 
     public double angleCorrectionCW = 8.17;
     public double angleCorrectionCCW = 11.26;
@@ -177,6 +179,12 @@ public class SimpleAuto extends LinearOpMode
             telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
             telemetry.update();
         }
+
+        moveInchAmount(true, 5);
+        waitTime(10);
+        moveInchAmount(true,12);
+        waitTime(10);
+        turnNinety(true);
     }
 
     public void setUpHardware() { // Assigns motor names in phone to the objects in code
@@ -335,22 +343,39 @@ public class SimpleAuto extends LinearOpMode
         //using motor encoders
         double driveTrainCorrection = 1;
 
-        double oneRotationDistance = diameter * Math.PI; // In cm
-        double rotationAmount = (oneFootCm / 12) / oneRotationDistance;
-        double totalTicks = rotationAmount * ticksPerRotation * inches * 2 * driveTrainCorrection; // *2 is to account for gear ratio
+        double rotationAmount = (oneFootCm / 12) / circumference;
+        double totalTicks = rotationAmount * ticksPerRotation * inches * wheelRatio * driveTrainCorrection;
+
+        double threeInches = rotationAmount * ticksPerRotation * 3 * wheelRatio * driveTrainCorrection;
 
         resetEncoders();
 
         if(forward){
-            motorsOn(.75);
             while(opModeIsActive() && leftBackDrive.getCurrentPosition() < totalTicks){
+                if(leftBackDrive.getCurrentPosition() > totalTicks - threeInches){
+                    double power = totalTicks / (totalTicks - threeInches);
+                    if(power < .25){
+                        power = .25;
+                    }
+                    motorsOn(power);
+                }else{
+                    motorsOn(1);
+                }
                 telemetry.addData("Encoder Value:", leftBackDrive.getCurrentPosition());
                 telemetry.update();
             }
         }else{
             totalTicks = -totalTicks;
-            motorsOn(-.75);
             while(opModeIsActive() && leftBackDrive.getCurrentPosition() > totalTicks){
+                if(leftBackDrive.getCurrentPosition() < totalTicks + threeInches){
+                    double power = Math.abs(totalTicks / (totalTicks + threeInches));
+                    if(power < .25){
+                        power = .25;
+                    }
+                    motorsOn(-power);
+                }else{
+                    motorsOn(-1);
+                }
                 telemetry.addData("Encoder Value:", leftBackDrive.getCurrentPosition());
                 telemetry.update();
             }
@@ -444,7 +469,7 @@ public class SimpleAuto extends LinearOpMode
      */
     public double getAngle(){
         if(imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle < 0){
-            return 360 + imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle; // Addition since the value is negative
+            return 0;
         }
         return imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
     }
@@ -456,14 +481,10 @@ public class SimpleAuto extends LinearOpMode
      * @return true (CW) or false (CCW)
      */
     public boolean optimalDirection(double target){
-        if(target > getAngle()){
-            double x1 = target - getAngle();
-            double x2 = 360 - x1;
-            return x1 < x2;
+        if(optimalAngleChange(target) < 0){
+            return false;
         }else{
-            double x1 = getAngle() - target;
-            double x2 = 360 - x1;
-            return x1 > x2;
+            return true;
         }
     }
 
@@ -473,15 +494,30 @@ public class SimpleAuto extends LinearOpMode
      * @return Shortest angle to target
      */
     public double optimalAngleChange(double target) {
-        double x1;
-        double x2;
-        if(target > getAngle()){
-            x1 = target - getAngle();
-        }else{
-            x1 = getAngle() - target;
+        double x = target - getAngle();
+        double y = target - getAngle() - 360;
+        double z = target - getAngle() + 360;
+
+        double absX = Math.abs(x);
+        double absZ = Math.abs(y);
+        double absY = Math.abs(z);
+
+        double min = absX;
+
+        if(absZ < min){
+            min = absZ;
         }
-        x2 = 360 - x1;
-        return Math.min(x1, x2);
+        if(absY < min){
+            min = absY;
+        }
+
+        if(min == absX){
+            return x;
+        }else if(min == absY){
+            return y;
+        }else{
+            return z;
+        }
     }
 
     @SuppressLint("DefaultLocale")
