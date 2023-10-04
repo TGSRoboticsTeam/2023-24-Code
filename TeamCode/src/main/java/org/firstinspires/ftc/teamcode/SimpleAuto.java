@@ -235,8 +235,8 @@ public class SimpleAuto extends LinearOpMode
      * @param CW True or false
      */
     public void turnNinety(boolean CW){
-        int adjustment = 1;
-        if(!CW){
+        int adjustment = -1;
+        if(CW){
             adjustment *= -1;
         }
         double distancePerRotation = circumference;
