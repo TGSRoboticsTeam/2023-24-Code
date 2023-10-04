@@ -16,11 +16,6 @@ public class SimpleDrive extends LinearOpMode {
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
 
-    double lAdjust  =   0;
-    double lbAdjust =   0;
-    double rAdjust  =   0;
-    double rbAdjust =   0;
-
     @Override
     public void runOpMode() {
 
@@ -73,56 +68,12 @@ public class SimpleDrive extends LinearOpMode {
             double lateral =  gamepad1.left_stick_x;
             double yaw     =  gamepad1.right_stick_x;
 
-            boolean adjustLeftStrafe = gamepad1.dpad_left;
-            boolean adjustRightStrafe = gamepad1.dpad_right;
-            boolean adjustBackward = gamepad1.dpad_down;
-            boolean adjustForward = gamepad1.dpad_up;
-            boolean adjustLeftTurn = gamepad1.left_bumper;
-            boolean adjustRightTurn = gamepad1.right_bumper;
-
-            if(adjustForward){
-                lAdjust = .25;
-                lbAdjust = .25;
-                rAdjust = .25;
-                rbAdjust = .25;
-            }else if(adjustBackward){
-                lAdjust = -.25;
-                lbAdjust = -.25;
-                rAdjust = -.25;
-                rbAdjust = -.25;
-            }else if(adjustRightStrafe){
-                lAdjust = .25;
-                lbAdjust = -.25;
-                rAdjust = -.25;
-                rbAdjust = .25;
-            }else if(adjustLeftStrafe){
-                lAdjust = -.25;
-                lbAdjust = .25;
-                rAdjust = .25;
-                rbAdjust = -.25;
-            }else if(adjustLeftTurn){
-                lAdjust = -.25;
-                lbAdjust = -.25;
-                rAdjust = .25;
-                rbAdjust = .25;
-            }else if(adjustRightTurn){
-                lAdjust = .25;
-                lbAdjust = .25;
-                rAdjust = -.25;
-                rbAdjust = -.25;
-            }else{
-                lAdjust = 0;
-                lbAdjust = 0;
-                rAdjust = 0;
-                rbAdjust = 0;
-            }
-
             // Combine the joystick requests for each axis-motion to determine each wheel's power.
             // Set up a variable for each drive wheel to save the power level for telemetry.
-            double leftFrontPower  = axial + lateral + yaw + lAdjust;
-            double rightFrontPower = axial - lateral - yaw + rAdjust;
-            double leftBackPower   = axial - lateral + yaw + lbAdjust;
-            double rightBackPower  = axial + lateral - yaw + rbAdjust;
+            double leftFrontPower  = axial + lateral + yaw;
+            double rightFrontPower = axial - lateral - yaw;
+            double leftBackPower   = axial - lateral + yaw;
+            double rightBackPower  = axial + lateral - yaw;
 
             // Normalize the values so no wheel power exceeds 100%
             // This ensures that the robot maintains the desired motion.
